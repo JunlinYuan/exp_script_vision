@@ -1,0 +1,35 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Outputs
+outputs/*.png
+outputs/*.json
+!outputs/.gitkeep
+
+# Debug files
+debug_*.png
+debug_output/
+
+# Sample/test files
+sample_frames/
+test_*.png
+test_*.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Temporary files
+*.tmp
+*.log
