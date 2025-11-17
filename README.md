@@ -1,6 +1,6 @@
-# Hydrogen Bubble Flow Visualization - Ruler Calibration
+# Hydrogen Bubble Flow Visualization - Analysis Tools
 
-Semi-automatic ruler calibration tool for experimental fluid mechanics.
+Semi-automatic tools for experimental fluid mechanics: ruler calibration and timeline velocity detection.
 
 ## Quick Start
 
@@ -27,10 +27,12 @@ python scripts/semi_auto_calibration.py \
 ## Directory Structure
 
 ```
-arnab_script_vision/
+exp_script_vision/
 ├── videos/           # Input videos
-├── outputs/          # Calibration results
-├── scripts/          # Calibration tools
+├── outputs/          # Analysis results (calibrations, spatiotemporal images)
+├── scripts/          # Analysis tools
+│   ├── semi_auto_calibration.py      # Ruler calibration
+│   └── timeline_velocity_roi.py      # Timeline velocity (ROI + Y-averaging)
 ├── docs/            # Documentation
 ├── manual.py        # Original script
 ├── sample_frames/   # Extracted frames
@@ -77,3 +79,81 @@ Copy the `pixels_per_cm` value from the calibration JSON to the `CM_TO_PIXEL` di
 - **Manual method:** 2-3 minutes
 - **Semi-auto method:** 30 seconds
 - **Improvement:** 75% faster, 4x more accurate
+
+---
+
+## Timeline Velocity Detection
+
+Spatiotemporal analysis tool to detect and measure timeline movement velocity in experimental videos.
+
+### What It Does
+
+Creates a 2D spatiotemporal image that reveals timeline movement patterns:
+- **Y-averaged ROI extraction**: Averages over a vertical region to reduce noise
+- **Interactive ROI selection**: Excludes border artifacts and reflections
+- **Timeline visualization**: Diagonal streaks indicate moving timelines
+- **Velocity measurement**: Slope of streaks = velocity
+
+### Quick Start
+
+```bash
+# Run with interactive ROI selection
+uv run --with opencv-python --with matplotlib --with numpy \
+    scripts/timeline_velocity_roi.py \
+    --video videos/6cm12hz.mp4 \
+    --output outputs/6cm12hz_roi
+```
+
+### Workflow
+
+1. Run `timeline_velocity_roi.py`
+2. Click **2 corners** to define rectangular ROI (excludes borders)
+3. Script extracts ROI from each frame and averages over Y-direction
+4. Generates 2D spatiotemporal image (time vs horizontal position)
+
+### Outputs
+
+- `*_roi.json` - ROI coordinates (reusable with `--roi` flag)
+- `*_roi_selection.png` - Visualization of selected ROI
+- `*_data.npy` - Raw 2D spatiotemporal array (frames × pixels × RGB)
+- `*_spatiotemporal.png` - Final visualization with diagonal streaks
+
+### Interpreting Results
+
+In the spatiotemporal plot:
+- **X-axis**: Horizontal position in frame (pixels)
+- **Y-axis**: Frame number / Time
+- **Vertical streaks**: Stationary timeline (no movement)
+- **Diagonal streaks**: Moving timeline
+- **Slope**: velocity = (Δx / Δframes) × fps
+
+### Examples
+
+```bash
+# Basic ROI analysis
+uv run --with opencv-python --with matplotlib --with numpy \
+    scripts/timeline_velocity_roi.py \
+    --video videos/6cm12hz.mp4 \
+    --output outputs/6cm12hz_roi
+
+# Reuse saved ROI
+uv run --with opencv-python --with matplotlib --with numpy \
+    scripts/timeline_velocity_roi.py \
+    --video videos/6cm12hz.mp4 \
+    --output outputs/6cm12hz_roi2 \
+    --roi outputs/6cm12hz_roi_roi.json
+
+# Limit frames for quick testing
+uv run --with opencv-python --with matplotlib --with numpy \
+    scripts/timeline_velocity_roi.py \
+    --video videos/6cm12hz.mp4 \
+    --output outputs/test \
+    --max-frames 100
+```
+
+### Key Features
+
+- **Border artifact removal**: Interactive ROI selection excludes reflections and noise
+- **Robust signal**: Y-averaging over vertical region reduces noise
+- **Timeline visualization**: Diagonal streaks clearly show timeline movement
+- **Reusable ROI**: Save and reuse ROI across multiple videos from same setup
