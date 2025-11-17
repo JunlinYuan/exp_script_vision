@@ -34,6 +34,6 @@ test_*.json
 *.tmp
 *.log
 
-
-# data
+# Data files (videos and raw data arrays)
 *mp4
+*.npy

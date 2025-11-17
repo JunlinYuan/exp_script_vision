@@ -84,76 +84,109 @@ Copy the `pixels_per_cm` value from the calibration JSON to the `CM_TO_PIXEL` di
 
 ## Timeline Velocity Detection
 
-Spatiotemporal analysis tool to detect and measure timeline movement velocity in experimental videos.
+Complete interactive workflow for spatiotemporal analysis and velocity measurement of timeline markers in experimental videos.
 
 ### What It Does
 
-Creates a 2D spatiotemporal image that reveals timeline movement patterns:
-- **Y-averaged ROI extraction**: Averages over a vertical region to reduce noise
-- **Interactive ROI selection**: Excludes border artifacts and reflections
-- **Timeline visualization**: Diagonal streaks indicate moving timelines
-- **Velocity measurement**: Slope of streaks = velocity
+**3-step interactive workflow:**
+1. **ROI Selection**: Click to define analysis region, excluding border artifacts
+2. **Spatiotemporal Extraction**: Y-averaged extraction creates 2D image showing timeline movement
+3. **Velocity Measurement**: Click 2 points on diagonal streak to calculate velocity
+
+**Output:** Single JSON file + combined visualization image
 
 ### Quick Start
 
 ```bash
-# Run with interactive ROI selection
+# Complete interactive workflow
 uv run --with opencv-python --with matplotlib --with numpy \
     scripts/timeline_velocity_roi.py \
     --video videos/6cm12hz.mp4 \
-    --output outputs/6cm12hz_roi
+    --output outputs/6cm12hz_analysis
 ```
 
-### Workflow
+### Interactive Workflow
 
-1. Run `timeline_velocity_roi.py`
-2. Click **2 corners** to define rectangular ROI (excludes borders)
-3. Script extracts ROI from each frame and averages over Y-direction
-4. Generates 2D spatiotemporal image (time vs horizontal position)
+**Step 1: ROI Selection**
+- Click **top-left** corner of analysis region
+- Click **bottom-right** corner
+- Excludes borders with artifacts/reflections
+- Region will be Y-averaged for robust signal
+
+**Step 2: Spatiotemporal Extraction**
+- Script processes all frames automatically
+- Extracts ROI and averages over vertical direction
+- Creates 2D image: time (Y-axis) vs position (X-axis)
+- Diagonal streaks = moving timeline markers
+
+**Step 3: Velocity Measurement**
+- Click **first point** on a diagonal timeline streak
+- Click **second point** on same streak
+- Velocity calculated directly: **v = Δx / Δt** (pixels/second)
+- Uses time axis (not frame numbers) for intuitive results
 
 ### Outputs
 
-- `*_roi.json` - ROI coordinates (reusable with `--roi` flag)
-- `*_roi_selection.png` - Visualization of selected ROI
-- `*_data.npy` - Raw 2D spatiotemporal array (frames × pixels × RGB)
-- `*_spatiotemporal.png` - Final visualization with diagonal streaks
+Each analysis generates **3 files** with consistent naming:
+
+- **`<name>.json`** - All metadata and results
+  - ROI coordinates
+  - Video info (fps, frames, duration)
+  - Velocity measurement with selected points
+  - Timestamp and case name
+
+- **`<name>.png`** - Combined visualization
+  - Top: ROI selection on first frame
+  - Bottom: Spatiotemporal image with velocity line
+
+- **`<name>_data.npy`** - Raw spatiotemporal array
+  - Shape: (frames × width × RGB)
+  - For further analysis (excluded from git)
 
 ### Interpreting Results
 
-In the spatiotemporal plot:
-- **X-axis**: Horizontal position in frame (pixels)
-- **Y-axis**: Frame number / Time
+**Spatiotemporal plot (bottom of visualization):**
+- **X-axis**: Horizontal position within ROI (pixels)
+- **Y-axis**: Frame number (left) / Time in seconds (right)
 - **Vertical streaks**: Stationary timeline (no movement)
 - **Diagonal streaks**: Moving timeline
-- **Slope**: velocity = (Δx / Δframes) × fps
+- **Cyan line**: Your velocity measurement
+- **Velocity annotation**: Calculated speed in pixels/second
+
+**Velocity calculation:**
+- v = (x₂ - x₁) / (t₂ - t₁)
+- Units: pixels/second
+- Time calculated from video FPS metadata
 
 ### Examples
 
 ```bash
-# Basic ROI analysis
+# Full analysis workflow
 uv run --with opencv-python --with matplotlib --with numpy \
     scripts/timeline_velocity_roi.py \
     --video videos/6cm12hz.mp4 \
-    --output outputs/6cm12hz_roi
+    --output outputs/6cm12hz_analysis
 
-# Reuse saved ROI
+# Quick test with limited frames
 uv run --with opencv-python --with matplotlib --with numpy \
     scripts/timeline_velocity_roi.py \
     --video videos/6cm12hz.mp4 \
-    --output outputs/6cm12hz_roi2 \
-    --roi outputs/6cm12hz_roi_roi.json
-
-# Limit frames for quick testing
-uv run --with opencv-python --with matplotlib --with numpy \
-    scripts/timeline_velocity_roi.py \
-    --video videos/6cm12hz.mp4 \
-    --output outputs/test \
+    --output outputs/6cm12hz_test \
     --max-frames 100
+```
+
+**Output files:**
+```
+outputs/6cm12hz_analysis.json         # All metadata
+outputs/6cm12hz_analysis.png          # Combined visualization
+outputs/6cm12hz_analysis_data.npy     # Raw data (not tracked in git)
 ```
 
 ### Key Features
 
-- **Border artifact removal**: Interactive ROI selection excludes reflections and noise
-- **Robust signal**: Y-averaging over vertical region reduces noise
-- **Timeline visualization**: Diagonal streaks clearly show timeline movement
-- **Reusable ROI**: Save and reuse ROI across multiple videos from same setup
+- **3-step interactive workflow**: ROI → Spatiotemporal → Velocity
+- **Consolidated outputs**: 1 JSON + 1 PNG per analysis
+- **Direct velocity calculation**: Uses time (seconds), not frame numbers
+- **Y-averaging**: Reduces noise by averaging over vertical region
+- **Border artifact removal**: Interactive ROI selection excludes bad regions
+- **Combined visualization**: Both ROI and spatiotemporal in one image
